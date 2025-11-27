@@ -1,4 +1,3 @@
-# src/agents/data_agent.py
 import pandas as pd
 
 class DataAgent:
@@ -7,14 +6,12 @@ class DataAgent:
 
     def load(self, path):
         df = pd.read_csv(path, parse_dates=['date'])
-        # keep full data by default; use sample_frac for dev convenience
         if 0 < self.sample_frac < 1:
             return df.sample(frac=self.sample_frac, random_state=42).reset_index(drop=True)
         return df
 
     def add_metrics(self, df):
         df = df.copy()
-        # safe arithmetic
         df['impressions'] = df['impressions'].fillna(0).astype(float)
         df['clicks'] = df['clicks'].fillna(0).astype(float)
         df['spend'] = df['spend'].fillna(0).astype(float)

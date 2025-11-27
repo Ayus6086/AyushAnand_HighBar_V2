@@ -1,4 +1,3 @@
-# evaluator improvements (concept)
 from scipy import stats
 def pct_change(old, new):
     if old == 0:
@@ -12,11 +11,9 @@ class EvaluatorAgent:
         pct = pct_change(pre_mean, post_mean)
         p_value = 1.0
         try:
-            # Mann-Whitney U test (non-parametric)
             _, p_value = stats.mannwhitneyu(pre_vals, post_vals, alternative='two-sided')
         except Exception:
             p_value = 1.0
-        # effect size (Cliff's delta or simple Cohen's d can be computed; simple effect = pct)
         return {
             "pre_mean": pre_mean,
             "post_mean": post_mean,

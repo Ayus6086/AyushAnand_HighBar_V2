@@ -1,4 +1,3 @@
-# src/agents/insight_agent.py
 class InsightAgent:
     def __init__(self):
         pass

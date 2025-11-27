@@ -1,4 +1,3 @@
-# src/agents/creative_agent.py
 import uuid
 
 class CreativeAgent:
@@ -7,7 +6,6 @@ class CreativeAgent:
 
     def suggest(self, campaign_name, top_examples):
         suggestions = []
-        # derive short benefit phrase from examples
         base = "Our product"
         if top_examples:
             first = top_examples[0]
