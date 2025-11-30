@@ -21,7 +21,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 METRICS = {
     "timings": {},          
     "retries": {},          
@@ -29,12 +28,9 @@ METRICS = {
     "campaigns_processed": 0,
 }
 
-
-
 def load_config(path=CONFIG_PATH):
     with open(path, "r") as f:
         return yaml.safe_load(f)
-
 
 
 def save_log(name, data):
@@ -45,7 +41,6 @@ def save_log(name, data):
     path = LOG_DIR / f"{name}.json"
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
-
 
 
 def pct_change(old, new):
@@ -67,8 +62,6 @@ def extract_roas_drop_stats(all_insights, campaign_name):
                 pct = pct_change(pre, post)
             break
     return pre, post, pct
-
-
 
 def with_retry(name, func, *args, max_retries=3, **kwargs):
     """
