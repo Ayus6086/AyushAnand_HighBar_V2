@@ -86,7 +86,7 @@ The system automatically handles:
 - Type mismatches
 ---
 
-# 🧠 System Architecture (Agent Workflow)
+# 🧠 System Architecture (Multi-Agent Workflow)
 
 Below is the multi-agent workflow used in this project:
 
@@ -95,8 +95,8 @@ User Task ("Analyze ROAS drop")
         │
         ▼
 📌 Planner Agent
-- Decomposes the task
-- Selects campaigns with ROAS drop
+- Identifies which campaigns have performance changes
+- Selects focus campaigns
         │
         ▼
 📌 Insight Agent
@@ -104,14 +104,17 @@ User Task ("Analyze ROAS drop")
 - Analyzes ROAS/CTR time-series
         │
         ▼
-📌 Evaluator Agent
-- Validates hypotheses with pre/post metrics
-- Computes pre vs post metrics
+📌 Evaluator Agent (V2 Upgrade)
+- Adds quantitative validation:
+      - Pre vs Post ROAS
+      - Absolute Delta
+      - Percentage Delta
+      - Impact score (low/medium/high)
+      - Confidence value (0–1)
         │
         ▼
 📌 Creative Agent
-- Generates 3 creative recommendations
-- Uses proven e-commerce ad patterns
+- Creatives now reference the actual issue, not random ideas.
         │
         ▼
 📌 Report Generator
@@ -120,62 +123,53 @@ User Task ("Analyze ROAS drop")
 
 ---
 
-# 🔍 Validation Layer Description
+# 🔍 Validation Layer (V2 Requirement)
 
-### The **EvaluatorAgent** validates hypotheses using:
-#### ✔ ROAS validation:
-- Splits time-series into two halves  
-- Computes:
-  - pre_ROAS
-  - post_ROAS
-  - percentage drop
-- Calculates % drop  
-- Assigns confidence level  
+### The evaluator verifies:
+✔ ROAS pre vs post
+✔ CTR pre vs post
+✔ Spend & impressions changes
+✔ Delta % severity
+✔ Confidence based on sample size + metric shift  
 
-#### ✔ CTR validation:
-- Compares CTR vectors  
-- Adds quantitative evidence  
+#### Error Handling & Schema Governance (V2 Upgrade)
+Added:
+- Required-column checks  
+- Unexpected-column logs
+- Retry logic on data load & metric calculations
+- Inf/NaN cleaning
+- Structured error logs:
+  - logs/schema_error.json
+  - logs/run_error.json
+  - logs/data_load_error_attempt_*.json
+Pipeline never silently fails.
 
-### Why it matters:
-- Prevents hallucinated insights  
-- Ensures all results are data-driven  
-- Matches assignment rubric (20% validation weight)
-- Moves the system closer to a real marketing analytics pipeline
-
----
-
-# 📁 Logs (Structured JSON)
-
-Created automatically inside `/logs/`:
-
-Examples:
-```
-logs/planner_input.json
-logs/planner_output.json
-logs/insights_Men Premium Modal.json
-logs/creatives_WOMEN Seamless Everyday.json
-logs/data_summary.json
-```
-
-These logs show:
-- What each agent received  
-- What each agent produced  
-- Internal reasoning trace  
+### 📈 Observability
+Automatically saved:
+- logs/planner_input.json 
+- logs/planner_output.json  
+- logs/insights_<campaign>.json
+- logs/creatives_<campaign>.json
+- logs/metrics.json (execution timings, retries, error counts)
+Metrics logged:
+- Per-agent execution time
+- Number of retries
+- Total campaigns processed
+- Error counts
+This makes the system debuggable and production-friendly.
 
 ---
-
 # 📝 Example Outputs
 
 ## **insights.json (excerpt)**
 ```json
 {
-  "Men Bold Colors Drop": [
+  "WOMEN Seamless Everyday": [
     {
       "id": "h_roas_drop",
-      "hypothesis": "ROAS decreased (could be conversion issue or spend/channel mix)",
-      "pre_roas": 2.37,
-      "post_roas": 1.58,
-      "confidence": "medium"
+      "evidence": { "pre": 11.30, "post": 8.57, "delta_pct": -24.15 },
+      "impact": "medium",
+      "confidence": 0.60
     }
   ]
 }
@@ -184,11 +178,10 @@ These logs show:
 ## **creatives.json (excerpt)**
 ```json
 {
-  "WOMEN Seamless Everyday": [
+  "Men Bold Colors Drop": [
     {
-      "headline": "Seamless confidence for every day — limited time.",
-      "message": "Seamless confidence for every day — best-seller. Hurry and save.",
-      "cta": "Shop now"
+      "headline": "Only today: extra savings",
+      "linked_issue": "ROAS decreased significantly vs baseline"
     }
   ]
 }
@@ -196,48 +189,34 @@ These logs show:
 
 ## **report.md (excerpt)**
 ```
-## Executive Summary
-- WOMEN Seamless Everyday shows ROAS decline.
-- Men Bold Colors Drop demonstrates a confirmed ROAS drop.
-- Men Premium Modal remains stable.
+## A clean marketing summary including:
+- Executive summary
+- Executive summary
+- Creative prescriptions
+- Next steps
+- Files produced
 ```
 
 ---
 
-# 🧪 Re-running the Analysis
-Anytime you modify data or logic:
+# 🧪 Running Tests (V2 Requirement)
 
 ```bash
-python -m src.orchestrator.run
+pytest tests
 ```
+Covers:
+- Schema validation
+- Data calculations
+- Evaluator logic
 
-Automatically regenerates:
-- insights.json  
-- creatives.json  
-- report.md  
-- logs/*
-  
-No manual steps needed.
 ---
 
-# ✔ Assignment Deliverables Checklist
-
-| Deliverable       | Status |
-|------------------|--------|
-| agent_graph.md   | ✅ Delivered |
-| run.py           | ✅ Full orchestrator |
-| insights.json     | ✅ Generated |
-| creatives.json    | ✅ Generated |
-| report.md        | ✅ Marketer summary |
-| logs/            | ✅ Structured JSON logs |
-| tests/            | ✅ Data integrity tests |
-
-All evaluation rubric criteria are satisfied:
-- Agentic reasoning architecture ✔  
-- Reasoning depth ✔  
-- Validation layer ✔  
-- Prompt design ✔  
-- Creative outputs ✔
-- Observability + tests ✔
+# 🛠 Developer Notes
+Key Design Choices
+- Schema validation balances strictness + flexibility
+- Insights never rely on generic rules — all must be data-driven
+- Creative links always reference the validated reason
+- Modularity: each agent can be extended or replaced
+- Deterministic processing ensures reproducibility
 
 ---
